@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Trackly — Acortador de URLs</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  </head>
+
+  <body
+    class="min-h-screen bg-white text-gray-900 font-sans antialiased flex flex-col"
+  >
+    <!-- Navbar estilo docs técnicas -->
+    <header
+      class="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200"
+    >
+      <div
+        class="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between"
+      >
+        <!-- Logo + nombre -->
+        <a href="/" class="flex items-center gap-2.5 group">
+          <img src="/trackly.png" alt="Logo" class="w-8 h-8" />
+          <span class="font-semibold text-2xl tracking-tight">trackly</span>
+        </a>
+
+        <!-- Nav derecha estilo Linear/Stripe -->
+        <nav class="flex items-center gap-6">
+          <a
+            href="https://github.com/renzovilchez/trackly"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors group"
+          >
+            <svg
+              class="w-8 h-8 group-hover:scale-110 transition-transform duration-200"
+              fill="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
+                clip-rule="evenodd"
+              />
+            </svg>
+            <span class="text-lg font-medium">GitHub</span>
+          </a>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Main estilo documentación -->
+    <main class="max-w-5xl mx-auto px-6 py-20">
+      <!-- Hero minimalista -->
+      <div class="max-w-2xl mx-auto text-center mb-16">
+        <h1
+          class="text-4xl sm:text-5xl font-bold tracking-tight text-gray-900 mb-4"
+        >
+          Acorta URLs.<br />
+          <span class="text-gray-400">Sin complicaciones.</span>
+        </h1>
+        <p class="text-lg text-gray-500 leading-relaxed">
+          Proyecto educativo para aprender NestJS, HTMX y despliegue moderno.
+        </p>
+      </div>
+
+      <!-- Formulario estilo Stripe/Linear -->
+      <div class="max-w-xl mx-auto mb-12">
+        <form
+          hx-post="/links"
+          hx-target="#resultado"
+          hx-swap="innerHTML"
+          class="flex gap-3"
+        >
+          <input
+            name="url"
+            type="url"
+            required
+            placeholder="https://tusitioweb.com/ruta/muy-larga..."
+            class="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-4 py-3.5 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white transition-all"
+          />
+          <button
+            class="bg-black text-white px-6 py-3.5 rounded-lg font-medium hover:bg-gray-800 active:scale-95 transition-all"
+          >
+            Acortar
+          </button>
+        </form>
+      </div>
+
+      <!-- Resultados -->
+      <div id="resultado" class="max-w-xl mx-auto"></div>
+      <div id="lista" class="max-w-xl mx-auto mt-8"></div>
+    </main>
+
+    <!-- Footer estilo docs -->
+    <footer class="border-t border-gray-200 mt-auto">
+      <div
+        class="max-w-5xl mx-auto px-6 py-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-500"
+      >
+        <span>Proyecto educativo — 2026</span>
+        <a
+          href="https://renzovilchez.dev"
+          target="_blank"
+          class="text-gray-900 font-medium hover:underline decoration-gray-300 underline-offset-4"
+        >
+          Hecho por Renzo Vilchez
+        </a>
+      </div>
+    </footer>
+
+    <script>
+      // Tu script actual funciona igual
+      document.body.addEventListener('htmx:afterRequest', (evt) => {
+        const target = evt.detail.target;
+        if (target.id === 'resultado' || target.id === 'lista') {
+          try {
+            const data = JSON.parse(evt.detail.xhr.response);
+            if (Array.isArray(data)) {
+              target.innerHTML = data.map((link) => renderLink(link)).join('');
+            } else {
+              target.innerHTML = renderLink(data, true);
+            }
+          } catch (e) {
+            console.error('Error:', e);
+          }
+        }
+      });
+
+      function renderLink(link, isNew = false) {
+        const shortUrl = `${window.location.origin}/${link.slug}`;
+        return `
+          <div class="bg-gray-50 border ${isNew ? 'border-gray-400 ring-1 ring-gray-200' : 'border-gray-200'} rounded-lg p-4 mb-3">
+            <div class="flex items-center justify-between gap-4">
+              <div class="min-w-0 flex-1">
+                <p class="text-sm text-gray-500 truncate mb-1" title="${link.url}">${link.url}</p>
+                <div class="flex items-center gap-3">
+                  <a href="${shortUrl}" 
+                     class="text-gray-900 font-semibold hover:underline" 
+                     target="_blank">
+                    ${shortUrl}
+                  </a>
+                  <button onclick="navigator.clipboard.writeText('${shortUrl}')"
+                          class="text-gray-400 hover:text-gray-900 text-xs font-medium px-2 py-1 rounded hover:bg-gray-200 transition">
+                    Copiar
+                  </button>
+                </div>
+              </div>
+              <time class="text-xs text-gray-400 whitespace-nowrap">
+                ${new Date(link.createdAt).toLocaleDateString()}
+              </time>
+            </div>
+          </div>
+        `;
+      }
+    </script>
+  </body>
+</html>
