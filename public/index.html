@@ -17,9 +17,37 @@
     <style>
       * {
         font-family: 'Geist', sans-serif;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        overflow-x: hidden;
       }
       .mono {
         font-family: 'Geist Mono', monospace;
+        word-break: break-all;
+      }
+
+      /* FIX responsive params */
+      .param-row {
+        display: grid;
+        grid-template-columns: 90px 1fr;
+        align-items: center;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        overflow: hidden;
+        margin-bottom: 8px;
+      }
+
+      @media (max-width: 480px) {
+        .param-row {
+          grid-template-columns: 1fr;
+        }
+
+        .param-label {
+          border-right: none;
+          border-bottom: 1px solid #e5e7eb;
+        }
       }
 
       /* ── Fade-in para el card del resultado ── */
@@ -259,19 +287,17 @@
       >
         <a href="/" class="flex items-center gap-2.5">
           <img src="/trackly.png" alt="Logo" class="w-8 h-8" />
-          <span class="mono font-semibold text-2xl tracking-tight"
-            >trackly</span
-          >
+          <span class="mono font-semibold text-xl tracking-tight">trackly</span>
         </a>
         <nav>
           <a
             href="https://github.com/renzovilchez/trackly"
             target="_blank"
             rel="noopener noreferrer"
-            class="flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors group"
+            class="flex items-center gap-2 text-gray-900 lg:text-gray-500 lg:hover:text-gray-900 transition-colors group"
           >
             <svg
-              class="w-6 h-6 group-hover:scale-110 transition-transform duration-200"
+              class="w-6 h-6 lg:group-hover:scale-110 transition-transform duration-200"
               fill="currentColor"
               viewBox="0 0 24 24"
             >
@@ -281,7 +307,7 @@
                 clip-rule="evenodd"
               />
             </svg>
-            <span class="text-lg font-medium">GitHub</span>
+            <span class="text-lg font-medium hidden sm:block">GitHub</span>
           </a>
         </nav>
       </div>
@@ -306,7 +332,7 @@
           hx-post="/links"
           hx-target="#resultado"
           hx-swap="innerHTML"
-          class="flex gap-3"
+          class="flex flex-col sm:flex-row gap-3"
         >
           <input
             name="url"
@@ -317,7 +343,7 @@
           />
           <button
             type="submit"
-            class="bg-black text-white px-6 py-3.5 rounded-lg font-medium hover:bg-gray-800 active:scale-95 transition-all"
+            class="bg-black text-white px-6 py-4 sm:py-3.5 rounded-lg font-medium hover:bg-gray-800 active:scale-95 transition-all"
           >
             Acortar
           </button>
@@ -337,37 +363,14 @@
         </p>
 
         <div class="space-y-3">
-          <!-- GET /links ─────────────────────────────── -->
-          <div class="ep-card" id="ep-all">
-            <div class="ep-header" onclick="toggle('ep-all')">
-              <span class="badge badge-get">GET</span>
-              <span class="ep-path">/links</span>
-              <span class="ep-desc">Todos los links</span>
-              <span class="ep-toggle">›</span>
-            </div>
-            <div class="ep-body">
-              <button
-                class="exec-btn"
-                onclick="execGet('ep-all', buildUrl('/links'))"
-              >
-                Ejecutar
-              </button>
-              <div class="res-wrap hidden" id="ep-all-res">
-                <div class="res-meta">
-                  <span class="res-label">Response</span>
-                  <span class="res-status" id="ep-all-status"></span>
-                </div>
-                <pre class="res-json" id="ep-all-body"></pre>
-              </div>
-            </div>
-          </div>
-
           <!-- GET /links?page&limit ───────────────────── -->
           <div class="ep-card" id="ep-page">
             <div class="ep-header" onclick="toggle('ep-page')">
               <span class="badge badge-get">GET</span>
               <span class="ep-path">/links?page&amp;limit</span>
-              <span class="ep-desc">Paginación</span>
+              <span class="ep-desc"
+                >Lista de links (page=1, limit=10 por defecto)</span
+              >
               <span class="ep-toggle">›</span>
             </div>
             <div class="ep-body">
@@ -378,7 +381,7 @@
                   id="ep-page-page"
                   type="number"
                   min="1"
-                  placeholder="1"
+                  placeholder="1 (default)"
                   value="1"
                 />
               </div>
@@ -389,8 +392,17 @@
                   id="ep-page-limit"
                   type="number"
                   min="1"
-                  placeholder="10"
+                  placeholder="10 (default)"
                   value="10"
+                />
+              </div>
+              <div class="param-row">
+                <span class="param-label">search</span>
+                <input
+                  class="param-input"
+                  id="ep-page-search"
+                  type="text"
+                  placeholder="example.com"
                 />
               </div>
               <button
@@ -401,6 +413,7 @@
                     buildUrl('/links', {
                       page: v('ep-page-page'),
                       limit: v('ep-page-limit'),
+                      search: v('ep-page-search'),
                     }),
                   )
                 "
@@ -413,71 +426,6 @@
                   <span class="res-status" id="ep-page-status"></span>
                 </div>
                 <pre class="res-json" id="ep-page-body"></pre>
-              </div>
-            </div>
-          </div>
-
-          <!-- GET /links?search ──────────────────────── -->
-          <div class="ep-card" id="ep-search">
-            <div class="ep-header" onclick="toggle('ep-search')">
-              <span class="badge badge-get">GET</span>
-              <span class="ep-path">/links?search</span>
-              <span class="ep-desc">Búsqueda</span>
-              <span class="ep-toggle">›</span>
-            </div>
-            <div class="ep-body">
-              <div class="param-row">
-                <span class="param-label">page</span>
-                <input
-                  class="param-input"
-                  id="ep-search-page"
-                  type="number"
-                  min="1"
-                  placeholder="1"
-                  value="1"
-                />
-              </div>
-              <div class="param-row">
-                <span class="param-label">limit</span>
-                <input
-                  class="param-input"
-                  id="ep-search-limit"
-                  type="number"
-                  min="1"
-                  placeholder="10"
-                  value="10"
-                />
-              </div>
-              <div class="param-row">
-                <span class="param-label">search</span>
-                <input
-                  class="param-input"
-                  id="ep-search-q"
-                  type="text"
-                  placeholder="example.com"
-                />
-              </div>
-              <button
-                class="exec-btn"
-                onclick="
-                  execGet(
-                    'ep-search',
-                    buildUrl('/links', {
-                      page: v('ep-search-page'),
-                      limit: v('ep-search-limit'),
-                      search: v('ep-search-q'),
-                    }),
-                  )
-                "
-              >
-                Ejecutar
-              </button>
-              <div class="res-wrap hidden" id="ep-search-res">
-                <div class="res-meta">
-                  <span class="res-label">Response</span>
-                  <span class="res-status" id="ep-search-status"></span>
-                </div>
-                <pre class="res-json" id="ep-search-body"></pre>
               </div>
             </div>
           </div>
@@ -693,7 +641,7 @@
         if (target.id !== 'resultado') return;
         try {
           const data = JSON.parse(evt.detail.xhr.response);
-          const link = Array.isArray(data) ? data[0] : data;
+          const link = data.data?.[0];
           if (!link?.id) return;
           target.innerHTML = renderCard(link);
           try {
@@ -722,7 +670,7 @@
         });
         return `
           <div class="animate-in border border-gray-200 rounded-xl p-5 bg-white">
-            <div class="flex items-start justify-between gap-4 mb-4">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
               <div class="min-w-0">
                 <p class="mono text-xs text-gray-400 truncate mb-1.5" title="${link.url}">${link.url}</p>
                 <a href="${shortUrl}" target="_blank"
