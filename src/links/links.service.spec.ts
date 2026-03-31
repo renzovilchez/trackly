@@ -12,7 +12,6 @@ describe('LinksService', () => {
     save: jest.fn(),
     find: jest.fn(),
     findOne: jest.fn(),
-    delete: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -41,7 +40,12 @@ describe('LinksService', () => {
   describe('createLink', () => {
     it('should successfully create and return a link', async () => {
       const dto = { url: 'https://example.com' };
-      const expectedLink = { id: 1, url: dto.url, slug: 'random', createdAt: new Date() };
+      const expectedLink = {
+        id: 1,
+        url: dto.url,
+        slug: 'random',
+        createdAt: new Date(),
+      };
       repo.save.mockResolvedValue(expectedLink);
 
       const result = await service.createLink(dto);
@@ -52,7 +56,11 @@ describe('LinksService', () => {
 
   describe('getLinkById', () => {
     it('should return a link if found', async () => {
-      const expectedLink = { id: 1, url: 'https://example.com', slug: 'random' };
+      const expectedLink = {
+        id: 1,
+        url: 'https://example.com',
+        slug: 'random',
+      };
       repo.findOne.mockResolvedValue(expectedLink);
 
       const result = await service.getLinkById(1);

@@ -13,7 +13,7 @@ describe('StatsController', () => {
         {
           provide: StatsService,
           useValue: {
-            getStats: jest.fn().mockReturnValue({ total: 0 }),
+            getStatsSummary: jest.fn().mockReturnValue({ totalClicks: 0 }),
           },
         },
       ],

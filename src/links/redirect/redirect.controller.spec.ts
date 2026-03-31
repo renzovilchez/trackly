@@ -11,7 +11,7 @@ describe('RedirectController', () => {
       controllers: [RedirectController],
       providers: [
         { provide: LinksService, useValue: { findBySlug: jest.fn() } },
-        { provide: StatsService, useValue: { increment: jest.fn() } },
+        { provide: StatsService, useValue: { createStat: jest.fn() } },
       ],
     }).compile();
 

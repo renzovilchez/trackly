@@ -12,8 +12,10 @@ describe('LinksController', () => {
         {
           provide: LinksService,
           useValue: {
-            create: jest.fn(),
-            findAll: jest.fn(),
+            createLink: jest.fn(),
+            getLinks: jest.fn(),
+            getLinkById: jest.fn(),
+            getLinksWithPagination: jest.fn(),
           },
         },
       ],
