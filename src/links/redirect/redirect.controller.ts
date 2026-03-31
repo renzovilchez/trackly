@@ -23,8 +23,19 @@ export class RedirectController {
     const link = await this.linksService.findBySlug(slug);
     if (!link) throw new NotFoundException('Link not found');
 
-    const ip = req.ip ? req.ip.split(',')[0].trim() : '';
-    await this.statsService.createStat(ip, link.id);
+    const ip =
+      (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
+      req.socket.remoteAddress ||
+      '';
+    const userAgent = req.headers['user-agent'] || '';
+    const referer = req.headers['referer'] || '';
+
+    await this.statsService.createStat({
+      ip,
+      userAgent,
+      referer,
+      linkId: link.id,
+    });
 
     return { url: link.url, statusCode: 302 };
   }
