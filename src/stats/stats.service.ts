@@ -41,7 +41,7 @@ export class StatsService {
     const uniqueResult = await this.statRepository
       .createQueryBuilder('stat')
       .select('COUNT(DISTINCT stat.ipHash)', 'count')
-      .where('stat.linkId = :linkId', { linkId })
+      .where('stat.link = :linkId', { linkId })
       .getRawOne();
     const uniqueVisitors = parseInt(uniqueResult.count, 10);
 
@@ -49,7 +49,7 @@ export class StatsService {
       .createQueryBuilder('stat')
       .select('stat.browser', 'browser')
       .addSelect('COUNT(*)', 'count')
-      .where('stat.linkId = :linkId', { linkId })
+      .where('stat.link = :linkId', { linkId })
       .andWhere('stat.browser IS NOT NULL')
       .groupBy('stat.browser')
       .orderBy('count', 'DESC')
@@ -66,7 +66,7 @@ export class StatsService {
       .createQueryBuilder('stat')
       .select('stat.refererDomain', 'domain')
       .addSelect('COUNT(*)', 'count')
-      .where('stat.linkId = :linkId', { linkId })
+      .where('stat.link = :linkId', { linkId })
       .andWhere('stat.refererDomain IS NOT NULL')
       .groupBy('stat.refererDomain')
       .orderBy('count', 'DESC')
@@ -83,7 +83,7 @@ export class StatsService {
       .createQueryBuilder('stat')
       .select('DATE(stat.clickedAt)::text', 'date')
       .addSelect('COUNT(*)', 'clicks')
-      .where('stat.linkId = :linkId', { linkId })
+      .where('stat.link = :linkId', { linkId })
       .andWhere('stat.clickedAt >= :sevenDaysAgo', {
         sevenDaysAgo: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
       })
