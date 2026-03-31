@@ -1,107 +1,115 @@
-# Trackly
+# 🚀 Trackly — Acortador de URLs con métricas
 
-API REST para acortar y rastrear URLs, con estadísticas de clics por enlace.
+**Trackly** es una aplicación ligera para acortar URLs y registrar métricas básicas de uso (clics, origen y dispositivo), construida con un enfoque simple y eficiente.
 
-Construido con **NestJS** · **TypeORM** · **SQLite (better-sqlite3)**
-
----
-
-## Estructura del proyecto
-
-```
-src/
-├── links/          # CRUD de enlaces acortados
-│   ├── links.controller.ts
-│   ├── links.service.ts
-│   └── links.module.ts
-├── stats/          # Estadísticas de clics por enlace
-│   ├── stats.controller.ts
-│   ├── stats.service.ts
-│   └── stats.module.ts
-├── app.module.ts   # Módulo raíz (TypeORM + módulos)
-└── main.ts         # Bootstrap de la app
-trackly.db          # Base de datos SQLite (generada automáticamente)
-```
+![Trackly Demo](https://raw.githubusercontent.com/renzovilchez/trackly/main/public/trackly.png)
 
 ---
 
-## Requisitos
+## ✨ Características
+
+- 🔗 **Acortamiento de URLs**: Genera slugs únicos para enlaces largos.
+- 📊 **Registro de clics**: Guarda información básica de cada visita:
+  - IP
+  - User-Agent (navegador/dispositivo)
+  - Referer (origen del tráfico)
+- ⚡ **UI rápida y simple**: Construida con HTMX y Tailwind CSS.
+- 📦 **Paginación**: Listado de enlaces con `page` y `limit`.
+- 🧱 **Arquitectura backend**: API REST con NestJS y TypeORM.
+- 🐘 **Base de datos**: PostgreSQL.
+
+---
+
+## 🛠️ Stack Tecnológico
+
+- Backend: NestJS
+- Base de Datos: PostgreSQL + TypeORM
+- Frontend: HTMX + Tailwind CSS
+- Lenguaje: TypeScript
+
+---
+
+## ⚙️ Instalación
+
+### Requisitos
 
 - Node.js >= 20
 - npm >= 10
 
----
-
-## Instalación
+### Pasos
 
 ```bash
+git clone https://github.com/renzovilchez/trackly.git
+cd trackly
 npm install
-```
-
----
-
-## Comandos principales
-
-```bash
-# Desarrollo con hot-reload
 npm run start:dev
-
-# Compilar el proyecto
-npm run build
-
-# Ejecutar en producción (requiere build previo)
-npm run start:prod
-
-# Linter
-npm run lint
-
-# Formatear código
-npm run format
 ```
 
 ---
 
-## Tests
+## 🚀 API
 
-```bash
-# Tests unitarios
-npm run test
+### Crear link
 
-# Tests en modo watch
-npm run test:watch
+POST /links
 
-# Cobertura
-npm run test:cov
-
-# Tests e2e
-npm run test:e2e
-```
+Body:
+{
+"url": "https://google.com"
+}
 
 ---
 
-## Variables de entorno
+### Listar links (paginado)
 
-Por ahora la app no requiere `.env`. La base de datos SQLite se crea automáticamente como `trackly.db` en la raíz del proyecto al iniciar.
+GET /links?page=1&limit=10
 
-> Para producción con Supabase/PostgreSQL se requerirá configurar `DATABASE_URL` (ver roadmap).
-
----
-
-## Endpoints disponibles (fase actual)
-
-| Método | Ruta     | Descripción                            |
-| ------ | -------- | -------------------------------------- |
-| —      | `/links` | Módulo de enlaces (en desarrollo)      |
-| —      | `/stats` | Módulo de estadísticas (en desarrollo) |
+Respuesta:
+{
+"data": [...],
+"total": 100,
+"page": 1,
+"lastPage": 10
+}
 
 ---
 
-## Roadmap
+### Obtener link por ID
 
-Ver [`ROADMAP.md`](./ROADMAP.md) para el plan de fases del proyecto.
+GET /links/:id
 
 ---
 
-## Licencia
+### Obtener estadísticas de un link
 
-UNLICENSED — Proyecto personal.
+GET /links/:id/stats
+
+Incluye:
+
+- total de clics
+- historial de visitas
+
+---
+
+### Redirección
+
+GET /:slug
+
+Registra automáticamente:
+
+- IP
+- navegador
+- referer
+
+---
+
+## 📁 Estructura
+
+- src/links → lógica de enlaces
+- src/stats → métricas de clics
+- public/ → frontend (HTMX)
+- test/ → pruebas
+
+---
+
+Hecho por Renzo Vilchez | [renzovilchez.dev](https://renzovilchez.dev)
