@@ -21,6 +21,8 @@ export class Link {
   @CreateDateColumn()
   createdAt: Date;
 
-  @OneToMany(() => Stat, (stat) => stat.link)
+  @OneToMany(() => Stat, (stat) => stat.link, {
+    cascade: ['insert', 'update'],
+  })
   stats: Stat[];
 }

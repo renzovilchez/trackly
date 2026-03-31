@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   HttpException,
   HttpStatus,
@@ -7,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Link } from './links.entity';
-import { DeleteResult, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { CreateLinkDto } from './dto/create-link.dto';
 import { nanoid } from 'nanoid';
 
@@ -19,6 +20,21 @@ export class LinksService {
   ) {}
 
   async createLink(dto: CreateLinkDto): Promise<Link> {
+    if (!dto.url.startsWith('https://')) {
+      throw new BadRequestException('Solo URLs HTTPS son permitidas');
+    }
+    const urlObj = new URL(dto.url);
+    const hostname = urlObj.hostname;
+
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      throw new BadRequestException('No se permiten URLs locales');
+    }
+    if (
+      /^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)|^127\./.test(hostname)
+    ) {
+      throw new BadRequestException('No se permiten IPs privadas');
+    }
+
     const maxRetries = 3;
     let attempts = 0;
 
@@ -72,8 +88,39 @@ export class LinksService {
     return link;
   }
 
-  async deleteLink(id: number): Promise<DeleteResult> {
-    return this.linkRepository.delete(id);
+  async getLinksWithPagination(
+    page: number,
+    limit: number,
+    search?: string,
+  ): Promise<{
+    data: Link[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
+    const skip = (page - 1) * limit;
+    const query = this.linkRepository.createQueryBuilder('link');
+
+    if (search) {
+      query.andWhere('(link.url ILIKE :search OR link.slug ILIKE :search)', {
+        search: `%${search}%`,
+      });
+    }
+
+    const [data, total] = await query
+      .skip(skip)
+      .take(limit)
+      .orderBy('link.createdAt', 'DESC')
+      .getManyAndCount();
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async findBySlug(slug: string): Promise<Link> {
