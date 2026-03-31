@@ -23,27 +23,11 @@ export class LinksController {
 
   @Get()
   async getLinks(
-    @Query('page', new DefaultValuePipe(0), ParseIntPipe) page?: number,
-    @Query('limit', new DefaultValuePipe(0), ParseIntPipe) limit?: number,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
     @Query('search') search?: string,
-  ): Promise<
-    | Link[]
-    | {
-        data: Link[];
-        total: number;
-        page: number;
-        limit: number;
-        totalPages: number;
-      }
-  > {
-    if (!page && !limit) {
-      return this.linksService.getLinks();
-    }
-    return this.linksService.getLinksWithPagination(
-      page || 1,
-      limit || 10,
-      search,
-    );
+  ) {
+    return this.linksService.getLinksWithPagination(page, limit, search);
   }
 
   @Get(':id')

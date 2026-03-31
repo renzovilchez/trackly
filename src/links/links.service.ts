@@ -76,7 +76,9 @@ export class LinksService {
   }
 
   async getLinks(): Promise<Link[]> {
-    const links = await this.linkRepository.find();
+    const links = await this.linkRepository.find({
+      order: { createdAt: 'ASC' },
+    });
     return links;
   }
 
