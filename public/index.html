@@ -5,28 +5,265 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Trackly — Acortador de URLs</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&family=Geist:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
     <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+    <style>
+      * {
+        font-family: 'Geist', sans-serif;
+      }
+      .mono {
+        font-family: 'Geist Mono', monospace;
+      }
+
+      /* ── Fade-in para el card del resultado ── */
+      @keyframes fadeUp {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .animate-in {
+        animation: fadeUp 0.2s ease both;
+      }
+
+      /* ── Method badges ── */
+      .badge {
+        font-family: 'Geist Mono', monospace;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        padding: 3px 9px;
+        border-radius: 4px;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+      .badge-get {
+        background: #f3f4f6;
+        color: #4b5563;
+        border: 1px solid #e5e7eb;
+      }
+      .badge-post {
+        background: #111827;
+        color: #f9fafb;
+      }
+
+      /* ── Endpoint card ── */
+      .ep-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        overflow: hidden;
+        transition: border-color 0.15s;
+      }
+      .ep-card:focus-within {
+        border-color: #9ca3af;
+      }
+
+      .ep-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 18px;
+        background: #fafafa;
+        border-bottom: 1px solid #f3f4f6;
+        cursor: pointer;
+        user-select: none;
+      }
+      .ep-path {
+        font-family: 'Geist Mono', monospace;
+        font-size: 13px;
+        color: #111827;
+        flex: 1;
+      }
+      .ep-desc {
+        font-size: 12px;
+        color: #9ca3af;
+      }
+      .ep-toggle {
+        font-size: 16px;
+        color: #9ca3af;
+        transition: transform 0.2s;
+        margin-left: 4px;
+      }
+      .ep-body {
+        display: none;
+        padding: 18px;
+      }
+      .ep-card.open .ep-body {
+        display: block;
+      }
+      .ep-card.open .ep-toggle {
+        transform: rotate(180deg);
+      }
+      .ep-card.open .ep-header {
+        background: white;
+        border-bottom-color: #e5e7eb;
+      }
+
+      /* ── Param inputs ── */
+      .param-row {
+        display: grid;
+        grid-template-columns: 110px 1fr;
+        align-items: center;
+        gap: 0;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        overflow: hidden;
+        margin-bottom: 8px;
+      }
+      .param-label {
+        font-family: 'Geist Mono', monospace;
+        font-size: 12px;
+        color: #6b7280;
+        padding: 9px 12px;
+        background: #f9fafb;
+        border-right: 1px solid #e5e7eb;
+        white-space: nowrap;
+      }
+      .param-input {
+        font-family: 'Geist Mono', monospace;
+        font-size: 13px;
+        color: #111827;
+        padding: 9px 14px;
+        border: none;
+        outline: none;
+        background: white;
+        width: 100%;
+      }
+      .param-input::placeholder {
+        color: #d1d5db;
+      }
+      .param-input:focus {
+        background: #fafafa;
+      }
+
+      /* ── Execute button ── */
+      .exec-btn {
+        width: 100%;
+        background: #111827;
+        color: white;
+        font-size: 13px;
+        font-weight: 500;
+        padding: 10px;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        margin-top: 12px;
+        transition:
+          background 0.15s,
+          transform 0.1s;
+      }
+      .exec-btn:hover {
+        background: #000;
+      }
+      .exec-btn:active {
+        transform: scale(0.99);
+      }
+      .exec-btn:disabled {
+        background: #9ca3af;
+        cursor: not-allowed;
+      }
+
+      /* ── Response block ── */
+      .res-wrap {
+        margin-top: 16px;
+      }
+      .res-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 6px;
+      }
+      .res-label {
+        font-family: 'Geist Mono', monospace;
+        font-size: 11px;
+        color: #9ca3af;
+      }
+      .res-status {
+        font-family: 'Geist Mono', monospace;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .res-status.ok {
+        color: #111827;
+      }
+      .res-status.err {
+        color: #ef4444;
+      }
+
+      .res-json {
+        font-family: 'Geist Mono', monospace;
+        font-size: 12px;
+        line-height: 1.75;
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 14px 16px;
+        white-space: pre-wrap;
+        word-break: break-all;
+        color: #374151;
+        margin: 0;
+        max-height: 360px;
+        overflow-y: auto;
+      }
+      .res-json.ok {
+        border-color: #d1d5db;
+      }
+      .res-json.err {
+        border-color: #fca5a5;
+        background: #fff5f5;
+        color: #b91c1c;
+      }
+
+      /* ── Copy button ── */
+      .copy-btn {
+        font-size: 12px;
+        font-weight: 500;
+        padding: 4px 10px;
+        border-radius: 6px;
+        border: 1px solid #d1d5db;
+        color: #374151;
+        background: white;
+        cursor: pointer;
+        white-space: nowrap;
+        transition:
+          background 0.15s,
+          color 0.15s,
+          border-color 0.15s;
+      }
+      .copy-btn:hover {
+        background: #111827;
+        color: white;
+        border-color: #111827;
+      }
+    </style>
   </head>
 
-  <body
-    class="min-h-screen bg-white text-gray-900 font-sans antialiased flex flex-col"
-  >
-    <!-- Navbar estilo docs técnicas -->
+  <body class="min-h-screen bg-white text-gray-900 antialiased flex flex-col">
+    <!-- ══ HEADER ══════════════════════════════════════════ -->
     <header
       class="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200"
     >
       <div
         class="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between"
       >
-        <!-- Logo + nombre -->
-        <a href="/" class="flex items-center gap-2.5 group">
+        <a href="/" class="flex items-center gap-2.5">
           <img src="/trackly.png" alt="Logo" class="w-8 h-8" />
-          <span class="font-semibold text-2xl tracking-tight">trackly</span>
+          <span class="mono font-semibold text-2xl tracking-tight"
+            >trackly</span
+          >
         </a>
-
-        <!-- Nav derecha estilo Linear/Stripe -->
-        <nav class="flex items-center gap-6">
+        <nav>
           <a
             href="https://github.com/renzovilchez/trackly"
             target="_blank"
@@ -34,7 +271,7 @@
             class="flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors group"
           >
             <svg
-              class="w-8 h-8 group-hover:scale-110 transition-transform duration-200"
+              class="w-6 h-6 group-hover:scale-110 transition-transform duration-200"
               fill="currentColor"
               viewBox="0 0 24 24"
             >
@@ -50,9 +287,8 @@
       </div>
     </header>
 
-    <!-- Main estilo documentación -->
-    <main class="max-w-5xl mx-auto px-6 py-20">
-      <!-- Hero minimalista -->
+    <!-- ══ HERO + FORM ══════════════════════════════════════ -->
+    <main class="max-w-5xl mx-auto px-6 py-20 w-full">
       <div class="max-w-2xl mx-auto text-center mb-16">
         <h1
           class="text-4xl sm:text-5xl font-bold tracking-tight text-gray-900 mb-4"
@@ -65,7 +301,6 @@
         </p>
       </div>
 
-      <!-- Formulario estilo Stripe/Linear -->
       <div class="max-w-xl mx-auto mb-12">
         <form
           hx-post="/links"
@@ -78,9 +313,10 @@
             type="url"
             required
             placeholder="https://tusitioweb.com/ruta/muy-larga..."
-            class="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-4 py-3.5 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white transition-all"
+            class="mono flex-1 bg-gray-50 border border-gray-200 rounded-lg px-4 py-3.5 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:bg-white transition-all"
           />
           <button
+            type="submit"
             class="bg-black text-white px-6 py-3.5 rounded-lg font-medium hover:bg-gray-800 active:scale-95 transition-all"
           >
             Acortar
@@ -88,12 +324,278 @@
         </form>
       </div>
 
-      <!-- Resultados -->
       <div id="resultado" class="max-w-xl mx-auto"></div>
-      <div id="lista" class="max-w-xl mx-auto mt-8"></div>
     </main>
 
-    <!-- Footer estilo docs -->
+    <!-- ══ API DOCS ══════════════════════════════════════════ -->
+    <section class="max-w-5xl mx-auto px-6 pb-28 w-full">
+      <div class="max-w-xl mx-auto">
+        <p
+          class="mono text-xs font-semibold tracking-widest text-gray-400 uppercase mb-6"
+        >
+          API Reference
+        </p>
+
+        <div class="space-y-3">
+          <!-- GET /links ─────────────────────────────── -->
+          <div class="ep-card" id="ep-all">
+            <div class="ep-header" onclick="toggle('ep-all')">
+              <span class="badge badge-get">GET</span>
+              <span class="ep-path">/links</span>
+              <span class="ep-desc">Todos los links</span>
+              <span class="ep-toggle">›</span>
+            </div>
+            <div class="ep-body">
+              <button
+                class="exec-btn"
+                onclick="execGet('ep-all', buildUrl('/links'))"
+              >
+                Ejecutar
+              </button>
+              <div class="res-wrap hidden" id="ep-all-res">
+                <div class="res-meta">
+                  <span class="res-label">Response</span>
+                  <span class="res-status" id="ep-all-status"></span>
+                </div>
+                <pre class="res-json" id="ep-all-body"></pre>
+              </div>
+            </div>
+          </div>
+
+          <!-- GET /links?page&limit ───────────────────── -->
+          <div class="ep-card" id="ep-page">
+            <div class="ep-header" onclick="toggle('ep-page')">
+              <span class="badge badge-get">GET</span>
+              <span class="ep-path">/links?page&amp;limit</span>
+              <span class="ep-desc">Paginación</span>
+              <span class="ep-toggle">›</span>
+            </div>
+            <div class="ep-body">
+              <div class="param-row">
+                <span class="param-label">page</span>
+                <input
+                  class="param-input"
+                  id="ep-page-page"
+                  type="number"
+                  min="1"
+                  placeholder="1"
+                  value="1"
+                />
+              </div>
+              <div class="param-row">
+                <span class="param-label">limit</span>
+                <input
+                  class="param-input"
+                  id="ep-page-limit"
+                  type="number"
+                  min="1"
+                  placeholder="10"
+                  value="10"
+                />
+              </div>
+              <button
+                class="exec-btn"
+                onclick="
+                  execGet(
+                    'ep-page',
+                    buildUrl('/links', {
+                      page: v('ep-page-page'),
+                      limit: v('ep-page-limit'),
+                    }),
+                  )
+                "
+              >
+                Ejecutar
+              </button>
+              <div class="res-wrap hidden" id="ep-page-res">
+                <div class="res-meta">
+                  <span class="res-label">Response</span>
+                  <span class="res-status" id="ep-page-status"></span>
+                </div>
+                <pre class="res-json" id="ep-page-body"></pre>
+              </div>
+            </div>
+          </div>
+
+          <!-- GET /links?search ──────────────────────── -->
+          <div class="ep-card" id="ep-search">
+            <div class="ep-header" onclick="toggle('ep-search')">
+              <span class="badge badge-get">GET</span>
+              <span class="ep-path">/links?search</span>
+              <span class="ep-desc">Búsqueda</span>
+              <span class="ep-toggle">›</span>
+            </div>
+            <div class="ep-body">
+              <div class="param-row">
+                <span class="param-label">page</span>
+                <input
+                  class="param-input"
+                  id="ep-search-page"
+                  type="number"
+                  min="1"
+                  placeholder="1"
+                  value="1"
+                />
+              </div>
+              <div class="param-row">
+                <span class="param-label">limit</span>
+                <input
+                  class="param-input"
+                  id="ep-search-limit"
+                  type="number"
+                  min="1"
+                  placeholder="10"
+                  value="10"
+                />
+              </div>
+              <div class="param-row">
+                <span class="param-label">search</span>
+                <input
+                  class="param-input"
+                  id="ep-search-q"
+                  type="text"
+                  placeholder="example.com"
+                />
+              </div>
+              <button
+                class="exec-btn"
+                onclick="
+                  execGet(
+                    'ep-search',
+                    buildUrl('/links', {
+                      page: v('ep-search-page'),
+                      limit: v('ep-search-limit'),
+                      search: v('ep-search-q'),
+                    }),
+                  )
+                "
+              >
+                Ejecutar
+              </button>
+              <div class="res-wrap hidden" id="ep-search-res">
+                <div class="res-meta">
+                  <span class="res-label">Response</span>
+                  <span class="res-status" id="ep-search-status"></span>
+                </div>
+                <pre class="res-json" id="ep-search-body"></pre>
+              </div>
+            </div>
+          </div>
+
+          <!-- GET /links/:id ─────────────────────────── -->
+          <div class="ep-card" id="ep-id">
+            <div class="ep-header" onclick="toggle('ep-id')">
+              <span class="badge badge-get">GET</span>
+              <span class="ep-path">/links/:id</span>
+              <span class="ep-desc">Link por ID</span>
+              <span class="ep-toggle">›</span>
+            </div>
+            <div class="ep-body">
+              <div class="param-row">
+                <span class="param-label">id</span>
+                <input
+                  class="param-input"
+                  id="ep-id-val"
+                  type="number"
+                  min="1"
+                  placeholder="1"
+                />
+              </div>
+              <button
+                class="exec-btn"
+                onclick="
+                  execGet(
+                    'ep-id',
+                    buildUrl('/links/' + (v('ep-id-val') || '1')),
+                  )
+                "
+              >
+                Ejecutar
+              </button>
+              <div class="res-wrap hidden" id="ep-id-res">
+                <div class="res-meta">
+                  <span class="res-label">Response</span>
+                  <span class="res-status" id="ep-id-status"></span>
+                </div>
+                <pre class="res-json" id="ep-id-body"></pre>
+              </div>
+            </div>
+          </div>
+
+          <!-- GET /links/:id/stats ───────────────────── -->
+          <div class="ep-card" id="ep-stats">
+            <div class="ep-header" onclick="toggle('ep-stats')">
+              <span class="badge badge-get">GET</span>
+              <span class="ep-path">/links/:id/stats</span>
+              <span class="ep-desc">Estadísticas</span>
+              <span class="ep-toggle">›</span>
+            </div>
+            <div class="ep-body">
+              <div class="param-row">
+                <span class="param-label">id</span>
+                <input
+                  class="param-input"
+                  id="ep-stats-val"
+                  type="number"
+                  min="1"
+                  placeholder="1"
+                />
+              </div>
+              <button
+                class="exec-btn"
+                onclick="
+                  execGet(
+                    'ep-stats',
+                    buildUrl('/links/' + (v('ep-stats-val') || '1') + '/stats'),
+                  )
+                "
+              >
+                Ejecutar
+              </button>
+              <div class="res-wrap hidden" id="ep-stats-res">
+                <div class="res-meta">
+                  <span class="res-label">Response</span>
+                  <span class="res-status" id="ep-stats-status"></span>
+                </div>
+                <pre class="res-json" id="ep-stats-body"></pre>
+              </div>
+            </div>
+          </div>
+
+          <!-- POST /links ─────────────────────────────── -->
+          <div class="ep-card" id="ep-post">
+            <div class="ep-header" onclick="toggle('ep-post')">
+              <span class="badge badge-post">POST</span>
+              <span class="ep-path">/links</span>
+              <span class="ep-desc">Crear link</span>
+              <span class="ep-toggle">›</span>
+            </div>
+            <div class="ep-body">
+              <div class="param-row">
+                <span class="param-label">url</span>
+                <input
+                  class="param-input"
+                  id="ep-post-url"
+                  type="url"
+                  placeholder="https://tusitioweb.com/ruta/muy-larga..."
+                />
+              </div>
+              <button class="exec-btn" onclick="execPost()">Ejecutar</button>
+              <div class="res-wrap hidden" id="ep-post-res">
+                <div class="res-meta">
+                  <span class="res-label">Response</span>
+                  <span class="res-status" id="ep-post-status"></span>
+                </div>
+                <pre class="res-json" id="ep-post-body"></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- /space-y-3 -->
+      </div>
+    </section>
+
+    <!-- ══ FOOTER ═══════════════════════════════════════════ -->
     <footer class="border-t border-gray-200 mt-auto">
       <div
         class="max-w-5xl mx-auto px-6 py-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-500"
@@ -110,48 +612,141 @@
     </footer>
 
     <script>
-      // Tu script actual funciona igual
-      document.body.addEventListener('htmx:afterRequest', (evt) => {
+      const BASE = '';
+
+      // ── Helpers ──────────────────────────────────────────
+      function v(id) {
+        return document.getElementById(id)?.value?.trim() || '';
+      }
+
+      function buildUrl(path, params = {}) {
+        const clean = Object.fromEntries(
+          Object.entries(params).filter(([, val]) => val !== ''),
+        );
+        const qs = new URLSearchParams(clean).toString();
+        return BASE + path + (qs ? '?' + qs : '');
+      }
+
+      function toggle(id) {
+        document.getElementById(id).classList.toggle('open');
+      }
+
+      function showResponse(epId, status, ok, json) {
+        const wrap = document.getElementById(`${epId}-res`);
+        const stEl = document.getElementById(`${epId}-status`);
+        const bodyEl = document.getElementById(`${epId}-body`);
+        wrap.classList.remove('hidden');
+        stEl.textContent = `${status} ${ok ? '✓' : '✗'}`;
+        stEl.className = `res-status ${ok ? 'ok' : 'err'}`;
+        bodyEl.textContent = JSON.stringify(json, null, 2);
+        bodyEl.className = `res-json ${ok ? 'ok' : 'err'}`;
+      }
+
+      function setLoading(epId, loading) {
+        const btn = document.querySelector(`#${epId} .exec-btn`);
+        if (btn) {
+          btn.disabled = loading;
+          btn.textContent = loading ? 'Ejecutando…' : 'Ejecutar';
+        }
+      }
+
+      // ── GET genérico ──────────────────────────────────────
+      async function execGet(epId, url) {
+        setLoading(epId, true);
+        try {
+          const res = await fetch(url);
+          const data = await res.json();
+          showResponse(epId, res.status, res.ok, data);
+        } catch (err) {
+          showResponse(epId, 'Error', false, { message: err.message });
+        } finally {
+          setLoading(epId, false);
+        }
+      }
+
+      // ── POST ──────────────────────────────────────────────
+      async function execPost() {
+        const url = v('ep-post-url');
+        if (!url) {
+          document.getElementById('ep-post-url').focus();
+          return;
+        }
+        setLoading('ep-post', true);
+        try {
+          const res = await fetch(BASE + '/links', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url }),
+          });
+          const data = await res.json();
+          showResponse('ep-post', res.status, res.ok, data);
+        } catch (err) {
+          showResponse('ep-post', 'Error', false, { message: err.message });
+        } finally {
+          setLoading('ep-post', false);
+        }
+      }
+
+      // ── HTMX: card de resultado arriba ───────────────────
+      document.body.addEventListener('htmx:afterRequest', async (evt) => {
         const target = evt.detail.target;
-        if (target.id === 'resultado' || target.id === 'lista') {
+        if (target.id !== 'resultado') return;
+        try {
+          const data = JSON.parse(evt.detail.xhr.response);
+          const link = Array.isArray(data) ? data[0] : data;
+          if (!link?.id) return;
+          target.innerHTML = renderCard(link);
           try {
-            const data = JSON.parse(evt.detail.xhr.response);
-            if (Array.isArray(data)) {
-              target.innerHTML = data.map((link) => renderLink(link)).join('');
-            } else {
-              target.innerHTML = renderLink(data, true);
+            const r = await fetch(`/links/${link.id}/stats`);
+            if (r.ok) {
+              const s = await r.json();
+              const el = document.getElementById(`stats-${link.id}`);
+              if (el) {
+                const n = s.totalClicks ?? s.total ?? 0;
+                el.textContent = `${n} clic${n !== 1 ? 's' : ''}`;
+                el.classList.remove('hidden');
+              }
             }
-          } catch (e) {
-            console.error('Error:', e);
-          }
+          } catch (_) {}
+        } catch (e) {
+          console.error(e);
         }
       });
 
-      function renderLink(link, isNew = false) {
+      function renderCard(link) {
         const shortUrl = `${window.location.origin}/${link.slug}`;
+        const date = new Date(link.createdAt).toLocaleDateString('es-PE', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+        });
         return `
-          <div class="bg-gray-50 border ${isNew ? 'border-gray-400 ring-1 ring-gray-200' : 'border-gray-200'} rounded-lg p-4 mb-3">
-            <div class="flex items-center justify-between gap-4">
-              <div class="min-w-0 flex-1">
-                <p class="text-sm text-gray-500 truncate mb-1" title="${link.url}">${link.url}</p>
-                <div class="flex items-center gap-3">
-                  <a href="${shortUrl}" 
-                     class="text-gray-900 font-semibold hover:underline" 
-                     target="_blank">
-                    ${shortUrl}
-                  </a>
-                  <button onclick="navigator.clipboard.writeText('${shortUrl}')"
-                          class="text-gray-400 hover:text-gray-900 text-xs font-medium px-2 py-1 rounded hover:bg-gray-200 transition">
-                    Copiar
-                  </button>
-                </div>
+          <div class="animate-in border border-gray-200 rounded-xl p-5 bg-white">
+            <div class="flex items-start justify-between gap-4 mb-4">
+              <div class="min-w-0">
+                <p class="mono text-xs text-gray-400 truncate mb-1.5" title="${link.url}">${link.url}</p>
+                <a href="${shortUrl}" target="_blank"
+                   class="mono text-base font-semibold text-gray-900 hover:underline underline-offset-4 decoration-gray-300">
+                  ${shortUrl}
+                </a>
               </div>
-              <time class="text-xs text-gray-400 whitespace-nowrap">
-                ${new Date(link.createdAt).toLocaleDateString()}
-              </time>
+              <button onclick="copyText('${shortUrl}', this)" class="copy-btn shrink-0 mt-5">copiar</button>
             </div>
-          </div>
-        `;
+            <div class="flex items-center gap-3 pt-3 border-t border-gray-100">
+              <span class="text-xs text-gray-400">${date}</span>
+              <span id="stats-${link.id}"
+                    class="hidden mono text-xs font-semibold text-gray-900 bg-gray-100 px-2 py-0.5 rounded">
+              </span>
+            </div>
+          </div>`;
+      }
+
+      function copyText(text, btn) {
+        navigator.clipboard.writeText(text).then(() => {
+          const orig = btn.textContent;
+          btn.textContent = '✓';
+          setTimeout(() => (btn.textContent = orig), 1500);
+        });
       }
     </script>
   </body>
