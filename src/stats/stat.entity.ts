@@ -34,7 +34,12 @@ export class Stat {
   clickedAt: Date;
 
   static hashIp(ip: string): string {
-    const salt = process.env.IP_SALT || 'random-salt-change-in-production';
+    const salt = process.env.IP_SALT;
+    if (!salt) {
+      throw new Error(
+        'IP_SALT environment variable is required. Generate one with: openssl rand -hex 32',
+      );
+    }
     return crypto
       .createHash('sha256')
       .update(ip + salt)

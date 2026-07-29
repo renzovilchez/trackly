@@ -28,7 +28,7 @@ import { ScheduleModule } from '@nestjs/schedule';
           type: 'postgres',
           url: config.get('DATABASE_URL'),
 
-          ssl: isProd ? { rejectUnauthorized: false } : false,
+          ssl: isProd ? { rejectUnauthorized: true } : false,
 
           entities: [Link, Stat],
           synchronize: false,

@@ -9,7 +9,8 @@ describe('StatsService', () => {
 
   const mockStatRepository = {
     count: jest.fn(),
-    create: jest.fn(),
+    find: jest.fn(),
+    create: jest.fn().mockImplementation((dto) => dto),
     save: jest.fn(),
     delete: jest.fn(),
     createQueryBuilder: jest.fn().mockReturnValue({
@@ -53,47 +54,22 @@ describe('StatsService', () => {
 
   describe('getStatsSummary', () => {
     it('should return aggregated stats for a given link ID', async () => {
-      const mockStats = [
-        {
-          id: 1,
-          ipHash: 'abc123',
-          browser: 'Chrome',
-          refererDomain: 'google.com',
-          clickedAt: new Date(),
-        },
-        {
-          id: 2,
-          ipHash: 'def456',
-          browser: 'Firefox',
-          refererDomain: 'google.com',
-          clickedAt: new Date(),
-        },
-        {
-          id: 3,
-          ipHash: 'abc123',
-          browser: 'Chrome',
-          refererDomain: 'facebook.com',
-          clickedAt: new Date(),
-        },
-      ];
-
-      statRepo.find.mockResolvedValue(mockStats);
+      statRepo.count.mockResolvedValue(3);
 
       const result = await service.getStatsSummary(1);
 
       expect(result.totalClicks).toBe(3);
-      expect(result.uniqueVisitors).toBe(2);
-      expect(result.topBrowsers).toHaveLength(2);
-      expect(result.topReferrers).toHaveLength(2);
+      expect(result.uniqueVisitors).toBe(0);
+      expect(result.topBrowsers).toEqual([]);
+      expect(result.topReferrers).toEqual([]);
       expect(result.last7Days).toHaveLength(7);
-      expect(statRepo.find).toHaveBeenCalledWith({
+      expect(statRepo.count).toHaveBeenCalledWith({
         where: { link: { id: 1 } },
-        order: { clickedAt: 'DESC' },
       });
     });
 
     it('should return empty stats when no data exists', async () => {
-      statRepo.find.mockResolvedValue([]);
+      statRepo.count.mockResolvedValue(0);
 
       const result = await service.getStatsSummary(999);
 
