@@ -17,7 +17,7 @@ async function bootstrap() {
 
   app.set('trust proxy', true);
 
-  app.useStaticAssets(join(__dirname, '..', 'public'));
+  app.useStaticAssets(join(process.cwd(), 'public'));
 
   app.enableCors({
     origin: process.env.ALLOWED_ORIGINS?.split(',') ?? [
